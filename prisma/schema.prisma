@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SslStatus {
+  OK
+  WARNING
+  ERROR
+}
+
+model NotificationEmail {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  urls      MonitoredUrlOnEmail[]
+}
+
+model MonitoredUrl {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  label     String?
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  emails    MonitoredUrlOnEmail[]
+  checks    SslCheckResult[]
+  alerts    AlertDelivery[]
+}
+
+model MonitoredUrlOnEmail {
+  urlId   String
+  emailId String
+  url     MonitoredUrl      @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  email   NotificationEmail @relation(fields: [emailId], references: [id], onDelete: Cascade)
+
+  @@id([urlId, emailId])
+}
+
+model SslCheckResult {
+  id            String    @id @default(cuid())
+  urlId         String
+  url           MonitoredUrl @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  checkedAt     DateTime  @default(now())
+  status        SslStatus
+  validTo       DateTime?
+  daysRemaining Int?
+  issuer        String?
+  errorCode     String?
+  errorMessage  String?
+
+  @@index([urlId, checkedAt])
+}
+
+model AlertDelivery {
+  id       String   @id @default(cuid())
+  urlId    String
+  url      MonitoredUrl @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  kind     String
+  sentAt   DateTime @default(now())
+  resendId String?
+
+  @@index([urlId, kind, sentAt])
+}

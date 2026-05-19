@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sslchecker
+      POSTGRES_PASSWORD: sslchecker
+      POSTGRES_DB: sslchecker
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sslchecker -d sslchecker"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://sslchecker:sslchecker@db:5432/sslchecker
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
