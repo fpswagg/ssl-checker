@@ -16,7 +16,12 @@
     "docker:up": "docker compose up -d db",
     "docker:down": "docker compose down",
     "docker:build": "docker compose build",
-    "docker:prod": "docker compose up -d"
+    "docker:prod": "docker compose up -d",
+    "pm2:start": "bash scripts/pm2.sh start",
+    "pm2:restart": "bash scripts/pm2.sh restart",
+    "pm2:stop": "bash scripts/pm2.sh stop",
+    "pm2:status": "bash scripts/pm2.sh status",
+    "pm2:logs": "bash scripts/pm2.sh logs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

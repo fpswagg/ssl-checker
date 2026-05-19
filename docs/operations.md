@@ -29,6 +29,35 @@ cd ../client
 npm run dev            # UI :5173
 ```
 
+## Production API (PM2 on VPS)
+
+Run Postgres (Docker or managed), then start the API with PM2:
+
+```bash
+cd server
+cp .env.example .env   # edit secrets
+npm run docker:up      # optional: local Postgres on :5433
+
+npm install -g pm2     # once
+chmod +x scripts/pm2.sh
+./scripts/pm2.sh start # install, migrate, build, pm2 start
+```
+
+Other commands:
+
+```bash
+./scripts/pm2.sh restart   # after git pull / code changes
+./scripts/pm2.sh status
+./scripts/pm2.sh logs
+./scripts/pm2.sh stop
+```
+
+Or via npm: `npm run pm2:start`, `pm2:restart`, `pm2:stop`, `pm2:status`, `pm2:logs`.
+
+Optional: persist PM2 across reboot — `pm2 startup` (run the command it prints), then `pm2 save`.
+
+Config: [`../ecosystem.config.cjs`](../ecosystem.config.cjs). Logs: `server/logs/`.
+
 ## Production API (Docker)
 
 ```bash
