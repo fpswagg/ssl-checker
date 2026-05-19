@@ -68,3 +68,20 @@ model AlertDelivery {
 
   @@index([urlId, kind, sentAt])
 }
+
+/// Per-error fingerprint throttle (avoids duplicate ops emails).
+model OpsNotificationLog {
+  fingerprint String   @id
+  category    String
+  lastMessage String
+  lastSentAt  DateTime
+  suppressed  Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+/// Hourly cap on ops digest emails sent.
+model OpsDigestSend {
+  id         String   @id @default(cuid())
+  sentAt     DateTime @default(now())
+  errorCount Int
+}

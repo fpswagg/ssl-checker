@@ -7,13 +7,20 @@ import { urlsRouter } from "./routes/urls.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { checksRouter } from "./routes/checks.js";
 import { overviewRouter } from "./routes/overview.js";
+import { reportsRouter } from "./routes/reports.js";
+import {
+  notifyOpsError,
+  registerProcessErrorHandlers,
+} from "./lib/ops-notify.js";
 
 const app = express();
+
+registerProcessErrorHandlers();
 
 app.use(
   cors({
     origin: env.corsOrigin,
-    credentials: true,
+    credentials: typeof env.corsOrigin === "string",
   }),
 );
 app.use(express.json());
@@ -28,6 +35,7 @@ app.use("/api/urls", urlsRouter);
 app.use("/api/jobs", jobsRouter);
 app.use("/api/checks", checksRouter);
 app.use("/api/overview", overviewRouter);
+app.use("/api/reports", reportsRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
@@ -36,11 +44,16 @@ app.use((_req, res) => {
 app.use(
   (
     err: Error,
-    _req: express.Request,
+    req: express.Request,
     res: express.Response,
     _next: express.NextFunction,
   ) => {
     console.error(err);
+    notifyOpsError({
+      category: "http-500",
+      message: err.message,
+      details: `${req.method} ${req.path}`,
+    });
     res.status(500).json({ error: "Internal server error" });
   },
 );

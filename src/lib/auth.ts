@@ -5,16 +5,26 @@ import { env } from "./env.js";
 
 const TOKEN_TTL = "7d";
 
+/** bcrypt hashes start with $2a$, $2b$, or $2y$ */
+function isBcryptHash(value: string): boolean {
+  return /^\$2[aby]\$\d{2}\$/.test(value);
+}
+
 export type AuthPayload = { admin: true };
 
 export async function verifyPassword(password: string): Promise<boolean> {
-  const hash = env.dashboardPasswordHash();
-  if (hash) {
+  const hash = env.dashboardPasswordHash()?.trim();
+  if (hash && isBcryptHash(hash)) {
     return bcrypt.compare(password, hash);
   }
   const plain = env.dashboardPassword();
   if (plain) {
     return password === plain;
+  }
+  if (hash) {
+    throw new Error(
+      "DASHBOARD_PASSWORD_HASH is set but is not a valid bcrypt hash. Clear it or use DASHBOARD_PASSWORD.",
+    );
   }
   throw new Error("Set DASHBOARD_PASSWORD or DASHBOARD_PASSWORD_HASH");
 }

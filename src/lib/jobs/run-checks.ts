@@ -3,6 +3,8 @@ import { prisma } from "../db.js";
 import { env } from "../env.js";
 import { renderAlertEmail } from "../email/templates.js";
 import { sendEmail } from "../email/send.js";
+import { sendSslReport } from "../reports/ssl-report.js";
+import { notifyOpsError } from "../ops-notify.js";
 import { checkCertificate } from "../ssl/check-certificate.js";
 import {
   shouldSendFailureAlert,
@@ -156,41 +158,34 @@ export async function runAllChecks(): Promise<RunChecksSummary> {
     await sleep(CHECK_DELAY_MS);
   }
 
+  if (summary.errors.length > 0) {
+    notifyOpsError({
+      category: "daily-check",
+      message: `${summary.errors.length} host(s) failed during SSL checks`,
+      details: summary.errors.slice(0, 15).join("\n"),
+    });
+  }
+
   return summary;
 }
 
 export async function runWeeklyReport(): Promise<
   { ok: true } | { ok: false; error: string }
 > {
-  const urls = await prisma.monitoredUrl.findMany({
-    include: {
-      checks: { orderBy: { checkedAt: "desc" }, take: 1 },
-    },
-    orderBy: { url: "asc" },
-  });
-
-  const { renderWeeklyReportEmail } = await import("../email/templates.js");
-  const rows = urls.map((u) => {
-    const last = u.checks[0];
-    return {
-      host: u.url,
-      label: u.label,
-      status: last?.status ?? ("ERROR" as const),
-      validTo: last?.validTo ?? null,
-      daysRemaining: last?.daysRemaining ?? null,
-      errorMessage: last?.errorMessage ?? null,
-      checkedAt: last?.checkedAt ?? null,
-    };
-  });
-
-  const { subject, html } = renderWeeklyReportEmail(rows);
-  const result = await sendEmail({
-    to: [env.fallbackEmail()],
-    subject,
-    html,
+  const result = await sendSslReport({
+    recipients: [env.fallbackEmail()],
     idempotencyKey: `ssl-weekly/${todayKey()}`,
+    subjectNote: "weekly",
   });
 
-  if (!result.ok) return { ok: false, error: result.error };
+  if (!result.ok) {
+    notifyOpsError({
+      category: "weekly-report",
+      message: "Weekly SSL report failed to send",
+      details: result.error,
+    });
+    return { ok: false, error: result.error };
+  }
+
   return { ok: true };
 }

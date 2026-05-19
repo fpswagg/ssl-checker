@@ -30,6 +30,20 @@ Resend integration, recipients, idempotency, and weekly report behavior.
 |-------|-----|
 | Failure / recovery | All emails linked to the URL **plus** `FALLBACK_EMAIL` (deduped) |
 | Weekly report | `FALLBACK_EMAIL` only |
+| Manual report (dashboard) | `POST /api/reports/send` — fallback, selected emails, or both |
+
+## Ops error digests (anti-spam)
+
+Unhandled errors, HTTP 500s, check-run failures, and failed report sends are queued and emailed to **`FALLBACK_EMAIL`** as a digest.
+
+| Control | Env | Default |
+|---------|-----|---------|
+| Same-error cooldown | `OPS_NOTIFY_COOLDOWN_MINUTES` | 30 |
+| Max digests per hour | `OPS_NOTIFY_MAX_PER_HOUR` | 8 |
+| Batch window | `OPS_NOTIFY_DIGEST_SECONDS` | 90 |
+| Flush when queue reaches | `OPS_NOTIFY_DIGEST_MAX_BATCH` | 5 |
+
+Similar errors share a fingerprint (category + normalized message) so repeated failures do not flood the inbox.
 
 ## Templates
 

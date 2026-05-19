@@ -88,11 +88,15 @@ export type WeeklyReportRow = {
   checkedAt: Date | null;
 };
 
-export function renderWeeklyReportEmail(rows: WeeklyReportRow[]): {
+export function renderWeeklyReportEmail(
+  rows: WeeklyReportRow[],
+  options?: { subjectNote?: string },
+): {
   subject: string;
   html: string;
 } {
-  const subject = `SSL weekly report (${rows.length} hosts)`;
+  const note = options?.subjectNote ? ` — ${options.subjectNote}` : "";
+  const subject = `SSL report (${rows.length} hosts)${note}`;
   const tableRows = rows
     .map((row) => {
       const name = row.label ?? row.host;
@@ -125,4 +129,51 @@ export function renderWeeklyReportEmail(rows: WeeklyReportRow[]): {
   `;
 
   return { subject, html: layout(subject, body) };
+}
+
+export type OpsErrorItem = {
+  category: string;
+  message: string;
+  details?: string;
+  at: Date;
+};
+
+export function renderOpsErrorEmail(
+  items: OpsErrorItem[],
+  suppressedTotal: number,
+): { subject: string; html: string } {
+  const subject =
+    items.length === 1
+      ? `SSL Checker ops: ${items[0].category}`
+      : `SSL Checker ops: ${items.length} errors`;
+
+  const intro =
+    suppressedTotal > 0
+      ? `<p style="margin:0 0 16px;color:${styles.muted};font-size:13px;">${suppressedTotal} similar alert(s) were suppressed by cooldown since the last digest.</p>`
+      : "";
+
+  const blocks = items
+    .map((item) => {
+      const time = item.at.toISOString().replace("T", " ").slice(0, 19);
+      const details = item.details
+        ? `<pre style="margin:8px 0 0;padding:8px;background:#ebe4d3;border:1px solid ${styles.border};font-size:12px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(item.details)}</pre>`
+        : "";
+      return `<div style="margin:0 0 16px;padding:12px;border:1px solid ${styles.border};">
+        <p style="margin:0 0 4px;font-size:12px;color:${styles.muted};">${escapeHtml(item.category)} · ${time} UTC</p>
+        <p style="margin:0;font-weight:600;">${escapeHtml(item.message)}</p>
+        ${details}
+      </div>`;
+    })
+    .join("");
+
+  const body = `${intro}${blocks}`;
+  return { subject, html: layout(subject, body) };
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

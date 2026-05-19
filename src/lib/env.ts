@@ -19,10 +19,18 @@ function optional(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
 }
 
+function corsOriginOption(): string | boolean {
+  const value = optional("CORS_ORIGIN", "http://localhost:5173").trim();
+  if (value === "*" || value.toLowerCase() === "all") {
+    return true;
+  }
+  return value;
+}
+
 export const env = {
   port: Number(optional("PORT", "3001")),
   nodeEnv: optional("NODE_ENV", "development"),
-  corsOrigin: optional("CORS_ORIGIN", "http://localhost:5173"),
+  corsOrigin: corsOriginOption(),
   jwtSecret: () => required("JWT_SECRET"),
   dashboardPassword: () => process.env.DASHBOARD_PASSWORD,
   dashboardPasswordHash: () => process.env.DASHBOARD_PASSWORD_HASH,
@@ -31,4 +39,11 @@ export const env = {
   resendFrom: () => required("RESEND_FROM"),
   cronSecret: () => required("CRON_SECRET"),
   sslWarnDays: Number(optional("SSL_WARN_DAYS", "14")),
+  opsNotifyCooldownMinutes: () =>
+    Number(optional("OPS_NOTIFY_COOLDOWN_MINUTES", "30")),
+  opsNotifyMaxPerHour: () => Number(optional("OPS_NOTIFY_MAX_PER_HOUR", "8")),
+  opsNotifyDigestSeconds: () =>
+    Number(optional("OPS_NOTIFY_DIGEST_SECONDS", "90")),
+  opsNotifyDigestMaxBatch: () =>
+    Number(optional("OPS_NOTIFY_DIGEST_MAX_BATCH", "5")),
 };
