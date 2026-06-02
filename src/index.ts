@@ -8,6 +8,7 @@ import { jobsRouter } from "./routes/jobs.js";
 import { checksRouter } from "./routes/checks.js";
 import { overviewRouter } from "./routes/overview.js";
 import { reportsRouter } from "./routes/reports.js";
+import { startAutoCheckScheduler } from "./lib/jobs/auto-check-scheduler.js";
 import {
   notifyOpsError,
   registerProcessErrorHandlers,
@@ -60,4 +61,5 @@ app.use(
 
 app.listen(env.port, () => {
   console.log(`SSL Checker API listening on port ${env.port}`);
+  startAutoCheckScheduler();
 });

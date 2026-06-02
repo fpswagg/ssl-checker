@@ -27,13 +27,11 @@ flowchart LR
     UI[Vite React build]
   end
   subgraph vps [VPS]
-    API[Express API]
+    API[Express API + due-check scheduler]
     PG[(PostgreSQL)]
   end
   Resend[Resend]
-  Cron[cron curl]
   UI -->|HTTPS + JWT| API
-  Cron -->|Bearer CRON_SECRET| API
   API --> PG
   API --> Resend
 ```
@@ -51,7 +49,7 @@ The **API** holds all business logic and stays small (Express + Prisma). The **c
 | CRUD | `/api/urls` | JWT | Monitored hosts + email links |
 | GET | `/api/urls/:id/checks` | JWT | Check history |
 | POST | `/api/checks/run` | JWT | Manual full run |
-| POST | `/api/jobs/daily-check` | `CRON_SECRET` | Scheduled checks |
+| POST | `/api/jobs/daily-check` | `CRON_SECRET` | Optional external scheduled checks |
 | POST | `/api/jobs/weekly-report` | `CRON_SECRET` | Weekly email |
 
 ## Auth

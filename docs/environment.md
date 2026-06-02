@@ -33,6 +33,9 @@ Every configuration variable for API and client builds.
 | `RESEND_FROM` | yes | Verified sender, e.g. `SSL Checker <alerts@domain.com>` |
 | `CRON_SECRET` | yes | Bearer token for job endpoints |
 | `SSL_WARN_DAYS` | no | Days before expiry → WARNING (default `14`) |
+| `AUTO_CHECK_ENABLED` | no | Run built-in due-check scheduler (default `true`) |
+| `AUTO_CHECK_INTERVAL_HOURS` | no | Hours after a URL's last check before it is due again (default `24`) |
+| `AUTO_CHECK_POLL_SECONDS` | no | How often the scheduler scans for due URLs (default `60`) |
 
 ## Client (`client/.env` at build time)
 

@@ -19,6 +19,14 @@ function optional(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
 }
 
+function optionalBoolean(name: string, fallback: boolean): boolean {
+  const value = process.env[name];
+  if (!value) {
+    return fallback;
+  }
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase());
+}
+
 function corsOriginOption(): string | boolean {
   const value = optional("CORS_ORIGIN", "http://localhost:5173").trim();
   if (value === "*" || value.toLowerCase() === "all") {
@@ -39,6 +47,9 @@ export const env = {
   resendFrom: () => required("RESEND_FROM"),
   cronSecret: () => required("CRON_SECRET"),
   sslWarnDays: Number(optional("SSL_WARN_DAYS", "14")),
+  autoCheckEnabled: optionalBoolean("AUTO_CHECK_ENABLED", true),
+  autoCheckIntervalHours: Number(optional("AUTO_CHECK_INTERVAL_HOURS", "24")),
+  autoCheckPollSeconds: Number(optional("AUTO_CHECK_POLL_SECONDS", "60")),
   opsNotifyCooldownMinutes: () =>
     Number(optional("OPS_NOTIFY_COOLDOWN_MINUTES", "30")),
   opsNotifyMaxPerHour: () => Number(optional("OPS_NOTIFY_MAX_PER_HOUR", "8")),

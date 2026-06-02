@@ -1,6 +1,6 @@
 # SSL Checker API
 
-Standalone repository. Express API, Prisma/PostgreSQL, SSL checks, Resend email, cron job endpoints.
+Standalone repository. Express API, Prisma/PostgreSQL, automatic SSL checks, Resend email, cron job endpoints.
 
 The dashboard is a **separate git repository** — clone and deploy it independently; set `CORS_ORIGIN` to its URL.
 

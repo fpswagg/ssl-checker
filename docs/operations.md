@@ -79,7 +79,15 @@ npm run build
 
 Set `CORS_ORIGIN=https://your-dashboard-domain` on the API.
 
-## Cron (on VPS or any host that can reach the API)
+## Automatic checks
+
+The API includes a built-in scheduler. Every `AUTO_CHECK_POLL_SECONDS` seconds
+(default `60`), it finds enabled URLs whose latest check is at least
+`AUTO_CHECK_INTERVAL_HOURS` old (default `24`) and checks only those URLs.
+
+Set `AUTO_CHECK_ENABLED=false` if you want to rely only on external cron.
+
+## Optional external cron (on VPS or any host that can reach the API)
 
 Daily check (example 06:00 UTC):
 

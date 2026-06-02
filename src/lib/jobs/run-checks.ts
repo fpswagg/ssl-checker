@@ -1,4 +1,4 @@
-import type { SslStatus } from "@prisma/client";
+import type { Prisma, SslStatus } from "@prisma/client";
 import { prisma } from "../db.js";
 import { env } from "../env.js";
 import { renderAlertEmail } from "../email/templates.js";
@@ -13,6 +13,7 @@ import {
 
 const CHECK_DELAY_MS = 200;
 const HISTORY_KEEP = 90;
+const ONE_HOUR_MS = 60 * 60 * 1000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -78,7 +79,10 @@ export type RunChecksSummary = {
   errors: string[];
 };
 
-export async function runAllChecks(): Promise<RunChecksSummary> {
+async function runChecks(
+  where: Prisma.MonitoredUrlWhereInput,
+  errorCategory: string,
+): Promise<RunChecksSummary> {
   const summary: RunChecksSummary = {
     checked: 0,
     alertsSent: 0,
@@ -86,7 +90,7 @@ export async function runAllChecks(): Promise<RunChecksSummary> {
   };
 
   const urls = await prisma.monitoredUrl.findMany({
-    where: { enabled: true },
+    where,
     include: { emails: { include: { email: true } } },
   });
 
@@ -160,13 +164,49 @@ export async function runAllChecks(): Promise<RunChecksSummary> {
 
   if (summary.errors.length > 0) {
     notifyOpsError({
-      category: "daily-check",
+      category: errorCategory,
       message: `${summary.errors.length} host(s) failed during SSL checks`,
       details: summary.errors.slice(0, 15).join("\n"),
     });
   }
 
   return summary;
+}
+
+export async function runAllChecks(): Promise<RunChecksSummary> {
+  return runChecks({ enabled: true }, "daily-check");
+}
+
+export async function runDueChecks(
+  now = new Date(),
+): Promise<RunChecksSummary> {
+  const cutoff = new Date(
+    now.getTime() - env.autoCheckIntervalHours * ONE_HOUR_MS,
+  );
+  const urls = await prisma.monitoredUrl.findMany({
+    where: { enabled: true },
+    select: {
+      id: true,
+      checks: {
+        orderBy: { checkedAt: "desc" },
+        take: 1,
+        select: { checkedAt: true },
+      },
+    },
+  });
+
+  const dueIds = urls
+    .filter((url) => {
+      const lastCheck = url.checks[0]?.checkedAt;
+      return !lastCheck || lastCheck <= cutoff;
+    })
+    .map((url) => url.id);
+
+  if (dueIds.length === 0) {
+    return { checked: 0, alertsSent: 0, errors: [] };
+  }
+
+  return runChecks({ enabled: true, id: { in: dueIds } }, "auto-check");
 }
 
 export async function runWeeklyReport(): Promise<
