@@ -50,6 +50,9 @@ export const env = {
   autoCheckEnabled: optionalBoolean("AUTO_CHECK_ENABLED", true),
   autoCheckIntervalHours: Number(optional("AUTO_CHECK_INTERVAL_HOURS", "24")),
   autoCheckPollSeconds: Number(optional("AUTO_CHECK_POLL_SECONDS", "60")),
+  weeklyReportEnabled: optionalBoolean("WEEKLY_REPORT_ENABLED", true),
+  weeklyReportDay: Number(optional("WEEKLY_REPORT_DAY", "0")),
+  weeklyReportHour: Number(optional("WEEKLY_REPORT_HOUR", "9")),
   opsNotifyCooldownMinutes: () =>
     Number(optional("OPS_NOTIFY_COOLDOWN_MINUTES", "30")),
   opsNotifyMaxPerHour: () => Number(optional("OPS_NOTIFY_MAX_PER_HOUR", "8")),
